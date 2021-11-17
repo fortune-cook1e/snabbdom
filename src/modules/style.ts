@@ -11,11 +11,13 @@ const raf =
   (typeof window !== "undefined" &&
     window.requestAnimationFrame.bind(window)) ||
   setTimeout;
+
 const nextFrame = function (fn: any) {
   raf(function () {
     raf(fn);
   });
 };
+
 let reflowForced = false;
 
 function setNextFrame(obj: any, prop: string, val: any): void {

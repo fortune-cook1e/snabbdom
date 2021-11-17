@@ -16,6 +16,7 @@ type VNodeQueue = VNode[];
 
 const emptyNode = vnode("", {}, [], undefined, undefined);
 
+// 判断是否为同一个vnode
 function sameVnode(vnode1: VNode, vnode2: VNode): boolean {
   const isSameKey = vnode1.key === vnode2.key;
   const isSameIs = vnode1.data?.is === vnode2.data?.is;
@@ -24,6 +25,7 @@ function sameVnode(vnode1: VNode, vnode2: VNode): boolean {
   return isSameSel && isSameKey && isSameIs;
 }
 
+// 判断是否为vnode
 function isVnode(vnode: any): vnode is VNode {
   return vnode.sel !== undefined;
 }
@@ -52,15 +54,19 @@ function createKeyToOldIdx(
 }
 
 const hooks: Array<keyof Module> = [
-  "create",
-  "update",
-  "remove",
-  "destroy",
-  "pre",
-  "post",
+  "create", // a DOM element has been created based on a vnode	
+  "update", // an element is being updated
+  "remove", // an element is directly being removed from the DOM
+  "destroy",// an element is directly or indirectly being removed	
+  "pre", // an element is about to be patched
+  "post",// the patch process is done	
 ];
 
 export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
+  
+  // modules的作用：
+  // 如果传递styleModule 那么就会处理vnode 的style属性；不传则不处理
+
   const cbs: ModuleHooks = {
     create: [],
     update: [],
@@ -72,15 +78,20 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
 
   const api: DOMAPI = domApi !== undefined ? domApi : htmlDomApi;
 
+  // 给对应的钩子增加需要处理的module
+  // 这里假设 modules 传递了 [styleModule]
   for (const hook of hooks) {
     for (const module of modules) {
+      // currentHook = styleModule[create | update ...]
       const currentHook = module[hook];
       if (currentHook !== undefined) {
+        // cbs[create].push(styleModule[create])
         (cbs[hook] as any[]).push(currentHook);
       }
     }
   }
 
+  // 根据真实DOM返回一个vnode
   function emptyNodeAt(elm: Element) {
     const id = elm.id ? "#" + elm.id : "";
 
@@ -89,6 +100,8 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
     const classes = elm.getAttribute("class");
 
     const c = classes ? "." + classes.split(" ").join(".") : "";
+    
+    // 返回一个新 vnode 属性数据
     return vnode(
       api.tagName(elm).toLowerCase() + id + c,
       {},
@@ -325,22 +338,35 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
     }
   }
 
+  // 对相同vnode进行patch
   function patchVnode(
     oldVnode: VNode,
     vnode: VNode,
     insertedVnodeQueue: VNodeQueue
   ) {
     const hook = vnode.data?.hook;
+    // 执行vnode中需要在 patch前执行的函数
     hook?.prepatch?.(oldVnode, vnode);
+
+    // 复用旧vnode的dom节点
     const elm = (vnode.elm = oldVnode.elm)!;
+
     const oldCh = oldVnode.children as VNode[];
     const ch = vnode.children as VNode[];
+
+    // 如果两者引用完全相同 则直接return
     if (oldVnode === vnode) return;
+
     if (vnode.data !== undefined) {
       for (let i = 0; i < cbs.update.length; ++i)
+      // 执行更新的hook
+      // 这里以styleModule为例
+      // 执行 styleModule的update hook 也就是 updateStyle函数（modules/styles.ts）
+      // TODO: 研究到这里了 
         cbs.update[i](oldVnode, vnode);
       vnode.data.hook?.update?.(oldVnode, vnode);
     }
+
     if (isUndef(vnode.text)) {
       if (isDef(oldCh) && isDef(ch)) {
         if (oldCh !== ch) updateChildren(elm, oldCh, ch, insertedVnodeQueue);
@@ -364,12 +390,17 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
   return function patch(oldVnode: VNode | Element, vnode: VNode): VNode {
     let i: number, elm: Node, parent: Node;
     const insertedVnodeQueue: VNodeQueue = [];
+    // 执行 回调中所有modules的 pre 函数
+    // styleModule 则执行 forceReflow
     for (i = 0; i < cbs.pre.length; ++i) cbs.pre[i]();
 
+    // 如果旧节点不是虚拟vnode(真实的Dom节点)
+    // 那么根据真实DOM创建一个vnode
     if (!isVnode(oldVnode)) {
       oldVnode = emptyNodeAt(oldVnode);
     }
 
+    // 如果为同一个vnode节点
     if (sameVnode(oldVnode, vnode)) {
       patchVnode(oldVnode, vnode, insertedVnodeQueue);
     } else {

@@ -10,12 +10,12 @@ import { Dataset } from "./modules/dataset";
 export type Key = string | number | symbol;
 
 export interface VNode {
-  sel: string | undefined;
-  data: VNodeData | undefined;
-  children: Array<VNode | string> | undefined;
-  elm: Node | undefined;
-  text: string | undefined;
-  key: Key | undefined;
+  sel: string | undefined; // 挂载的dom节点 例: div#container (传递给h函数用)
+  data: VNodeData | undefined;  // 添加dom节点属性等
+  children: Array<VNode | string> | undefined; // 子节点
+  elm: Node | undefined; // 指向真实的dom节点
+  text: string | undefined; // 纯文本
+  key: Key | undefined; // 指向dom节点 避免重复创建
 }
 
 export interface VNodeData {
