@@ -31,7 +31,7 @@ export interface VNodeData {
   ns?: string; // for SVGs
   fn?: () => VNode; // for thunks
   args?: any[]; // for thunks
-  is?: string; // for custom elements v1
+  is?: string; // for custom elements v1 自定义元素 参考地址：https://developer.mozilla.org/zh-CN/docs/Web/API/Document/createElement
   [key: string]: any; // for any other 3rd party module
 }
 

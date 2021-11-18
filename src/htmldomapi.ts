@@ -27,6 +27,7 @@ export interface DOMAPI {
   isComment: (node: Node) => node is Comment;
 }
 
+// 创建元素
 function createElement(
   tagName: any,
   options?: ElementCreationOptions
@@ -34,6 +35,7 @@ function createElement(
   return document.createElement(tagName, options);
 }
 
+// 创建一个具有指定的命名空间URI和限定名称的元素 link:https://developer.mozilla.org/zh-CN/docs/Web/API/Document/createElementNS
 function createElementNS(
   namespaceURI: string,
   qualifiedName: string,

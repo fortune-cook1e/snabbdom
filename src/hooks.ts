@@ -12,9 +12,9 @@ export type RemoveHook = (vNode: VNode, removeCallback: () => void) => any;
 export type PostHook = () => any;
 
 export interface Hooks {
-  pre?: PreHook;
-  init?: InitHook;
-  create?: CreateHook;
+  pre?: PreHook; // patch 开始前
+  init?: InitHook; // 
+  create?: CreateHook; // 由vnode创建dom时调用
   insert?: InsertHook;
   prepatch?: PrePatchHook;
   update?: UpdateHook;

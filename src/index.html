@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <div id="app">
+    <div class="container">
+      haha
+    </div>
+  </div>
+  <script>
+    let domstr = 'div#app .container'
+    const dom = document.querySelector(domstr)
+    const hashIdx = domstr.indexOf("#");  // 3
+      const dotIdx = domstr.indexOf(".", hashIdx); // 8
+      const hash = hashIdx > 0 ? hashIdx : domstr.length; // 3
+      const dot = dotIdx > 0 ? dotIdx : domstr.length; // 8
+      
+
+      const tag =
+        hashIdx !== -1 || dotIdx !== -1
+          ? domstr.slice(0, Math.min(hash, dot)) // 'div#app.container'.slice(0,Math.min(3,7))
+          : domstr;
+
+          console.log({hashIdx,dotIdx,tag});
+  </script>
+</body>
+</html>

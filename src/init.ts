@@ -120,9 +120,11 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
     };
   }
 
+  // 根据vnode 创建DOM树
   function createElm(vnode: VNode, insertedVnodeQueue: VNodeQueue): Node {
     let i: any;
     let data = vnode.data;
+    // 调用初始化init hook钩子函数
     if (data !== undefined) {
       const init = data.hook?.init;
       if (isDef(init)) {
@@ -130,8 +132,11 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
         data = vnode.data;
       }
     }
+
     const children = vnode.children;
     const sel = vnode.sel;
+
+    // 处理comment注释
     if (sel === "!") {
       if (isUndef(vnode.text)) {
         vnode.text = "";
@@ -139,22 +144,40 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
       vnode.elm = api.createComment(vnode.text!);
     } else if (sel !== undefined) {
       // Parse selector
-      const hashIdx = sel.indexOf("#");
-      const dotIdx = sel.indexOf(".", hashIdx);
-      const hash = hashIdx > 0 ? hashIdx : sel.length;
-      const dot = dotIdx > 0 ? dotIdx : sel.length;
+      // 查询# . id和class选择器
+
+      // 这里以 div#app .container 为例
+      const hashIdx = sel.indexOf("#");  // 3
+      const dotIdx = sel.indexOf(".", hashIdx); // 8
+      const hash = hashIdx > 0 ? hashIdx : sel.length; // 3
+      const dot = dotIdx > 0 ? dotIdx : sel.length; // 8
+
+      // 解析拿标签,div span 等
+
+      // 拿到div
       const tag =
         hashIdx !== -1 || dotIdx !== -1
-          ? sel.slice(0, Math.min(hash, dot))
+          ? sel.slice(0, Math.min(hash, dot)) // 'div#app.container'.slice(0,Math.min(3,7))
           : sel;
+
+      // 如果不是svg类型则调用 createElement
       const elm = (vnode.elm =
         isDef(data) && isDef((i = data.ns))
           ? api.createElementNS(i, tag, data)
           : api.createElement(tag, data));
+
+
+      // 设置id属性
       if (hash < dot) elm.setAttribute("id", sel.slice(hash + 1, dot));
+
+      // 设置class属性
       if (dotIdx > 0)
         elm.setAttribute("class", sel.slice(dot + 1).replace(/\./g, " "));
+
+        // 调用create hook函数
       for (i = 0; i < cbs.create.length; ++i) cbs.create[i](emptyNode, vnode);
+
+      // 如果vnode有children 那么遍历children 添加到vnode对应的Element中
       if (is.array(children)) {
         for (i = 0; i < children.length; ++i) {
           const ch = children[i];
@@ -162,28 +185,34 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
             api.appendChild(elm, createElm(ch as VNode, insertedVnodeQueue));
           }
         }
+        // 如果vnode没有children 只有 text属性 则创建一个 text 节点
       } else if (is.primitive(vnode.text)) {
         api.appendChild(elm, api.createTextNode(vnode.text));
       }
+      
       const hook = vnode.data!.hook;
+
+      // TODO: 这里的if else 没看明白什么意思
       if (isDef(hook)) {
         hook.create?.(emptyNode, vnode);
+       // TODO: 调用 create hook；为 insert hook 填充 insertedVnodeQueue。(这里不太明白为什么这么做)
         if (hook.insert) {
           insertedVnodeQueue.push(vnode);
         }
       }
     } else {
+      // 处理text为空的情况
       vnode.elm = api.createTextNode(vnode.text!);
     }
     return vnode.elm;
   }
 
   function addVnodes(
-    parentElm: Node,
+    parentElm: Node, // dom节点
     before: Node | null,
-    vnodes: VNode[],
-    startIdx: number,
-    endIdx: number,
+    vnodes: VNode[], // 虚拟dom节点列表
+    startIdx: number, // 起始索引
+    endIdx: number, // 结束索引
     insertedVnodeQueue: VNodeQueue
   ) {
     for (; startIdx <= endIdx; ++startIdx) {
@@ -210,11 +239,13 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
     }
   }
 
+
+  // TODO: 看到这了
   function removeVnodes(
-    parentElm: Node,
-    vnodes: VNode[],
-    startIdx: number,
-    endIdx: number
+    parentElm: Node, // 父元素
+    vnodes: VNode[], // vnode列表 
+    startIdx: number, // 起始索引
+    endIdx: number // 结束索引
   ): void {
     for (; startIdx <= endIdx; ++startIdx) {
       let listeners: number;
@@ -240,6 +271,7 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
     }
   }
 
+  // TIP:核心点
   function updateChildren(
     parentElm: Node,
     oldCh: VNode[],
@@ -339,6 +371,7 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
   }
 
   // 对相同vnode进行patch
+  // 相同vnode 的特征 sel、data.is、key同时相同
   function patchVnode(
     oldVnode: VNode,
     vnode: VNode,
@@ -351,8 +384,8 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
     // 复用旧vnode的dom节点
     const elm = (vnode.elm = oldVnode.elm)!;
 
-    const oldCh = oldVnode.children as VNode[];
-    const ch = vnode.children as VNode[];
+    const oldCh = oldVnode.children as VNode[]; // 旧vnode子节点
+    const ch = vnode.children as VNode[]; // 新vnode的子节点
 
     // 如果两者引用完全相同 则直接return
     if (oldVnode === vnode) return;
@@ -362,18 +395,32 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
       // 执行更新的hook
       // 这里以styleModule为例
       // 执行 styleModule的update hook 也就是 updateStyle函数（modules/styles.ts）
-      // TODO: 研究到这里了 
         cbs.update[i](oldVnode, vnode);
       vnode.data.hook?.update?.(oldVnode, vnode);
     }
 
-    if (isUndef(vnode.text)) {
+      // TIP: 判断新vnode有无text
+      // 1. 新vnode有text
+      // 1) 新旧vnode 是否都有 children；如果新旧vnode 不相同 则更新 chidlren (核心)
+      // 2) 如果新vnode有children 说明 增加了 children 子节点；进行addnodes即可
+      // 3) 如果新vnode 没有children 但旧vnode有 进行删除children即可
+      // 4) 如果新旧vnode都没有children  但旧vnode有text属性，只需要将dom节点Element的text属性设置为空即可
+
+      // 2. 新旧vnode的text不相同（新vnode有text文本）
+      // 如果旧vnode有children，那么删除原先dom的所有children 然后塞入新vnode的text文本即可
+    if (isUndef(vnode.text)) { 
       if (isDef(oldCh) && isDef(ch)) {
+        // 比较新旧节点的子节点
+        // TIP: 这一块是核心
         if (oldCh !== ch) updateChildren(elm, oldCh, ch, insertedVnodeQueue);
       } else if (isDef(ch)) {
-        if (isDef(oldVnode.text)) api.setTextContent(elm, "");
+        // 新vnode有子节点，旧节点没子节点情况
+        // 说明新增了子节点
+        if (isDef(oldVnode.text)) api.setTextContent(elm, "");  // TODO: 这里不知道为什么要将元素的textcontent设置为空
         addVnodes(elm, null, ch, 0, ch.length - 1, insertedVnodeQueue);
       } else if (isDef(oldCh)) {
+        // 新节点没有children，旧节点有children
+        // 说明删除节点
         removeVnodes(elm, oldCh, 0, oldCh.length - 1);
       } else if (isDef(oldVnode.text)) {
         api.setTextContent(elm, "");
@@ -384,11 +431,13 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
       }
       api.setTextContent(elm, vnode.text!);
     }
+    // 所有patch完成后需要执行的callback
     hook?.postpatch?.(oldVnode, vnode);
   }
 
   return function patch(oldVnode: VNode | Element, vnode: VNode): VNode {
     let i: number, elm: Node, parent: Node;
+    // TODO: 不太懂这个需要插入的vnode 队列的意义在哪
     const insertedVnodeQueue: VNodeQueue = [];
     // 执行 回调中所有modules的 pre 函数
     // styleModule 则执行 forceReflow
