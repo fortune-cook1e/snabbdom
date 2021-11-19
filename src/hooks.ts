@@ -19,7 +19,7 @@ export interface Hooks {
   prepatch?: PrePatchHook;
   update?: UpdateHook;
   postpatch?: PostPatchHook;
-  destroy?: DestroyHook;
+  destroy?: DestroyHook; // 一个dom节点正在被删除时
   remove?: RemoveHook;
   post?: PostHook;
 }

@@ -91,7 +91,7 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
     }
   }
 
-  // 根据真实DOM返回一个vnode
+  // 根据一个dom节点创建一个空data的vnode
   function emptyNodeAt(elm: Element) {
     const id = elm.id ? "#" + elm.id : "";
 
@@ -111,6 +111,7 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
     );
   }
 
+  // 将删除节点的操作包一层，最终放在remove hook中调用
   function createRmCb(childElm: Node, listeners: number) {
     return function rmCb() {
       if (--listeners === 0) {
@@ -207,6 +208,7 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
     return vnode.elm;
   }
 
+  // 在element元素中插入新元素
   function addVnodes(
     parentElm: Node, // dom节点
     before: Node | null,
@@ -223,11 +225,13 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
     }
   }
 
+  // 递归对vnode以及children节点 调用 destroy Hook 钩子函数
   function invokeDestroyHook(vnode: VNode) {
     const data = vnode.data;
     if (data !== undefined) {
       data?.hook?.destroy?.(vnode);
       for (let i = 0; i < cbs.destroy.length; ++i) cbs.destroy[i](vnode);
+
       if (vnode.children !== undefined) {
         for (let j = 0; j < vnode.children.length; ++j) {
           const child = vnode.children[j];
@@ -236,14 +240,15 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
           }
         }
       }
+
     }
   }
 
 
-  // TODO: 看到这了
+  // 删除dom节点
   function removeVnodes(
     parentElm: Node, // 父元素
-    vnodes: VNode[], // vnode列表 
+    vnodes: VNode[], // vnode的children节点数组 
     startIdx: number, // 起始索引
     endIdx: number // 结束索引
   ): void {
@@ -252,17 +257,21 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
       let rm: () => void;
       const ch = vnodes[startIdx];
       if (ch != null) {
+
         if (isDef(ch.sel)) {
           invokeDestroyHook(ch);
           listeners = cbs.remove.length + 1;
           rm = createRmCb(ch.elm!, listeners);
           for (let i = 0; i < cbs.remove.length; ++i) cbs.remove[i](ch, rm);
+
           const removeHook = ch?.data?.hook?.remove;
+          
           if (isDef(removeHook)) {
             removeHook(ch, rm);
           } else {
             rm();
           }
+
         } else {
           // Text node
           api.removeChild(parentElm, ch.elm!);
@@ -425,10 +434,13 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
       } else if (isDef(oldVnode.text)) {
         api.setTextContent(elm, "");
       }
+      
+      // vnode的text存在说明新节点时纯本文节点；
     } else if (oldVnode.text !== vnode.text) {
       if (isDef(oldCh)) {
         removeVnodes(elm, oldCh, 0, oldCh.length - 1);
       }
+      // 将element的textContent属性设置为新vnode的text属性即可
       api.setTextContent(elm, vnode.text!);
     }
     // 所有patch完成后需要执行的callback
@@ -444,22 +456,25 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
     for (i = 0; i < cbs.pre.length; ++i) cbs.pre[i]();
 
     // 如果旧节点不是虚拟vnode(真实的Dom节点)
-    // 那么根据真实DOM创建一个vnode
+    // 那么根据真实DOM创建一个空data的vnode
     if (!isVnode(oldVnode)) {
       oldVnode = emptyNodeAt(oldVnode);
     }
 
-    // 如果为同一个vnode节点
+    // 是否为一个vnode节点
     if (sameVnode(oldVnode, vnode)) {
       patchVnode(oldVnode, vnode, insertedVnodeQueue);
     } else {
       elm = oldVnode.elm!;
       parent = api.parentNode(elm) as Node;
 
+      // 根据vnode创建vnode的element元素
       createElm(vnode, insertedVnodeQueue);
 
       if (parent !== null) {
+        // 先将新节点插入到原节点的兄弟节点旁
         api.insertBefore(parent, vnode.elm!, api.nextSibling(elm));
+        // 然后删除旧节点
         removeVnodes(parent, [oldVnode], 0, 0);
       }
     }
@@ -467,6 +482,8 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
     for (i = 0; i < insertedVnodeQueue.length; ++i) {
       insertedVnodeQueue[i].data!.hook!.insert!(insertedVnodeQueue[i]);
     }
+    
+    // 执行patch完后的hook函数
     for (i = 0; i < cbs.post.length; ++i) cbs.post[i]();
     return vnode;
   };

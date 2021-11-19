@@ -52,6 +52,12 @@ function createComment(text: string): Comment {
   return document.createComment(text);
 }
 
+
+/**
+ * @description 在参照节点之前 父节点之中插入 新节点；如果参考节点为null 那么新节点插入到末尾
+ * @date 2021-11-19 10:09:32
+ * @return {*}
+ */
 function insertBefore(
   parentNode: Node,
   newNode: Node,
