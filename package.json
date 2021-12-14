@@ -27,7 +27,7 @@
   "types": "build/index.d.ts",
   "sideEffects": false,
   "scripts": {
-    "build": "tsc && npm run bundle:cjs",
+    "build": "tsc -w && npm run bundle:cjs",
     "bundle:cjs": "rollup build/index.js --format cjs --file build/snabbdom.cjs.js",
     "examples": "serve .",
     "format": "prettier --write .",

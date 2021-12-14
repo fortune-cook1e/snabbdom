@@ -54,16 +54,15 @@ function createKeyToOldIdx(
 }
 
 const hooks: Array<keyof Module> = [
-  "create", // a DOM element has been created based on a vnode	
+  "create", // a DOM element has been created based on a vnode
   "update", // an element is being updated
   "remove", // an element is directly being removed from the DOM
-  "destroy",// an element is directly or indirectly being removed	
+  "destroy", // an element is directly or indirectly being removed
   "pre", // an element is about to be patched
-  "post",// the patch process is done	
+  "post", // the patch process is done
 ];
 
 export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
-  
   // modules的作用：
   // 如果传递styleModule 那么就会处理vnode 的style属性；不传则不处理
 
@@ -100,7 +99,7 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
     const classes = elm.getAttribute("class");
 
     const c = classes ? "." + classes.split(" ").join(".") : "";
-    
+
     // 返回一个新 vnode 属性数据
     return vnode(
       api.tagName(elm).toLowerCase() + id + c,
@@ -148,7 +147,7 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
       // 查询# . id和class选择器
 
       // 这里以 div#app .container 为例
-      const hashIdx = sel.indexOf("#");  // 3
+      const hashIdx = sel.indexOf("#"); // 3
       const dotIdx = sel.indexOf(".", hashIdx); // 8
       const hash = hashIdx > 0 ? hashIdx : sel.length; // 3
       const dot = dotIdx > 0 ? dotIdx : sel.length; // 8
@@ -167,7 +166,6 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
           ? api.createElementNS(i, tag, data)
           : api.createElement(tag, data));
 
-
       // 设置id属性
       if (hash < dot) elm.setAttribute("id", sel.slice(hash + 1, dot));
 
@@ -175,7 +173,7 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
       if (dotIdx > 0)
         elm.setAttribute("class", sel.slice(dot + 1).replace(/\./g, " "));
 
-        // 调用create hook函数
+      // 调用create hook函数
       for (i = 0; i < cbs.create.length; ++i) cbs.create[i](emptyNode, vnode);
 
       // 如果vnode有children 那么遍历children 添加到vnode对应的Element中
@@ -190,13 +188,13 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
       } else if (is.primitive(vnode.text)) {
         api.appendChild(elm, api.createTextNode(vnode.text));
       }
-      
+
       const hook = vnode.data!.hook;
 
       // TODO: 这里的if else 没看明白什么意思
       if (isDef(hook)) {
         hook.create?.(emptyNode, vnode);
-       // TODO: 调用 create hook；为 insert hook 填充 insertedVnodeQueue。(这里不太明白为什么这么做)
+        // TODO: 调用 create hook；为 insert hook 填充 insertedVnodeQueue。(这里不太明白为什么这么做)
         if (hook.insert) {
           insertedVnodeQueue.push(vnode);
         }
@@ -240,15 +238,13 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
           }
         }
       }
-
     }
   }
-
 
   // 删除dom节点
   function removeVnodes(
     parentElm: Node, // 父元素
-    vnodes: VNode[], // vnode的children节点数组 
+    vnodes: VNode[], // vnode的children节点数组
     startIdx: number, // 起始索引
     endIdx: number // 结束索引
   ): void {
@@ -257,7 +253,6 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
       let rm: () => void;
       const ch = vnodes[startIdx];
       if (ch != null) {
-
         if (isDef(ch.sel)) {
           invokeDestroyHook(ch);
           listeners = cbs.remove.length + 1;
@@ -265,13 +260,12 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
           for (let i = 0; i < cbs.remove.length; ++i) cbs.remove[i](ch, rm);
 
           const removeHook = ch?.data?.hook?.remove;
-          
+
           if (isDef(removeHook)) {
             removeHook(ch, rm);
           } else {
             rm();
           }
-
         } else {
           // Text node
           api.removeChild(parentElm, ch.elm!);
@@ -287,6 +281,7 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
     newCh: VNode[],
     insertedVnodeQueue: VNodeQueue
   ) {
+    console.log("update chidlren...");
     let oldStartIdx = 0;
     let newStartIdx = 0;
     let oldEndIdx = oldCh.length - 1;
@@ -310,6 +305,7 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
       } else if (newEndVnode == null) {
         newEndVnode = newCh[--newEndIdx];
       } else if (sameVnode(oldStartVnode, newStartVnode)) {
+        // TODO: 看到这了
         patchVnode(oldStartVnode, newStartVnode, insertedVnodeQueue);
         oldStartVnode = oldCh[++oldStartIdx];
         newStartVnode = newCh[++newStartIdx];
@@ -362,6 +358,7 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
         newStartVnode = newCh[++newStartIdx];
       }
     }
+
     if (oldStartIdx <= oldEndIdx || newStartIdx <= newEndIdx) {
       if (oldStartIdx > oldEndIdx) {
         before = newCh[newEndIdx + 1] == null ? null : newCh[newEndIdx + 1].elm;
@@ -401,23 +398,23 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
 
     if (vnode.data !== undefined) {
       for (let i = 0; i < cbs.update.length; ++i)
-      // 执行更新的hook
-      // 这里以styleModule为例
-      // 执行 styleModule的update hook 也就是 updateStyle函数（modules/styles.ts）
+        // 执行更新的hook
+        // 这里以styleModule为例
+        // 执行 styleModule的update hook 也就是 updateStyle函数（modules/styles.ts）
         cbs.update[i](oldVnode, vnode);
       vnode.data.hook?.update?.(oldVnode, vnode);
     }
 
-      // TIP: 判断新vnode有无text
-      // 1. 新vnode有text
-      // 1) 新旧vnode 是否都有 children；如果新旧vnode 不相同 则更新 chidlren (核心)
-      // 2) 如果新vnode有children 说明 增加了 children 子节点；进行addnodes即可
-      // 3) 如果新vnode 没有children 但旧vnode有 进行删除children即可
-      // 4) 如果新旧vnode都没有children  但旧vnode有text属性，只需要将dom节点Element的text属性设置为空即可
+    // TIP: 判断新vnode有无text
+    // 1. 新vnode有text
+    // 1) 新旧vnode 是否都有 children；如果新旧vnode 不相同 则更新 chidlren (核心)
+    // 2) 如果新vnode有children 说明 增加了 children 子节点；进行addnodes即可
+    // 3) 如果新vnode 没有children 但旧vnode有 进行删除children即可
+    // 4) 如果新旧vnode都没有children  但旧vnode有text属性，只需要将dom节点Element的text属性设置为空即可
 
-      // 2. 新旧vnode的text不相同（新vnode有text文本）
-      // 如果旧vnode有children，那么删除原先dom的所有children 然后塞入新vnode的text文本即可
-    if (isUndef(vnode.text)) { 
+    // 2. 新旧vnode的text不相同（新vnode有text文本）
+    // 如果旧vnode有children，那么删除原先dom的所有children 然后塞入新vnode的text文本即可
+    if (isUndef(vnode.text)) {
       if (isDef(oldCh) && isDef(ch)) {
         // 比较新旧节点的子节点
         // TIP: 这一块是核心
@@ -425,7 +422,7 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
       } else if (isDef(ch)) {
         // 新vnode有子节点，旧节点没子节点情况
         // 说明新增了子节点
-        if (isDef(oldVnode.text)) api.setTextContent(elm, "");  // TODO: 这里不知道为什么要将元素的textcontent设置为空
+        if (isDef(oldVnode.text)) api.setTextContent(elm, ""); // TODO: 这里不知道为什么要将元素的textcontent设置为空
         addVnodes(elm, null, ch, 0, ch.length - 1, insertedVnodeQueue);
       } else if (isDef(oldCh)) {
         // 新节点没有children，旧节点有children
@@ -434,7 +431,7 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
       } else if (isDef(oldVnode.text)) {
         api.setTextContent(elm, "");
       }
-      
+
       // vnode的text存在说明新节点时纯本文节点；
     } else if (oldVnode.text !== vnode.text) {
       if (isDef(oldCh)) {
@@ -462,6 +459,7 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
     }
 
     // 是否为一个vnode节点
+    // 判断是否相同的指标 key/selector/is 相同
     if (sameVnode(oldVnode, vnode)) {
       patchVnode(oldVnode, vnode, insertedVnodeQueue);
     } else {
@@ -482,7 +480,7 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
     for (i = 0; i < insertedVnodeQueue.length; ++i) {
       insertedVnodeQueue[i].data!.hook!.insert!(insertedVnodeQueue[i]);
     }
-    
+
     // 执行patch完后的hook函数
     for (i = 0; i < cbs.post.length; ++i) cbs.post[i]();
     return vnode;
