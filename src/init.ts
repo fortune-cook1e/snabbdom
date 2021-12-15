@@ -297,25 +297,45 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
 
     while (oldStartIdx <= oldEndIdx && newStartIdx <= newEndIdx) {
       if (oldStartVnode == null) {
+        // 旧节点第一个子节点不存在的话那么右移
         oldStartVnode = oldCh[++oldStartIdx]; // Vnode might have been moved left
       } else if (oldEndVnode == null) {
+        // 旧节点子节点左移
         oldEndVnode = oldCh[--oldEndIdx];
       } else if (newStartVnode == null) {
+        // 新节点子节点右移
         newStartVnode = newCh[++newStartIdx];
       } else if (newEndVnode == null) {
+        // 新节点子节点左移
         newEndVnode = newCh[--newEndIdx];
-      } else if (sameVnode(oldStartVnode, newStartVnode)) {
-        // TODO: 看到这了
+      }
+      // oldStartVnode/oldEndVnode/newStartVnode/newEndVnode 两两比较
+
+      // 新旧startVnode 进行比较
+      else if (sameVnode(oldStartVnode, newStartVnode)) {
         patchVnode(oldStartVnode, newStartVnode, insertedVnodeQueue);
         oldStartVnode = oldCh[++oldStartIdx];
         newStartVnode = newCh[++newStartIdx];
-      } else if (sameVnode(oldEndVnode, newEndVnode)) {
+      }
+      // 新旧 endVnode 进行比较
+      else if (sameVnode(oldEndVnode, newEndVnode)) {
         patchVnode(oldEndVnode, newEndVnode, insertedVnodeQueue);
         oldEndVnode = oldCh[--oldEndIdx];
         newEndVnode = newCh[--newEndIdx];
-      } else if (sameVnode(oldStartVnode, newEndVnode)) {
+      }
+      // 旧startVnode 与 新 endVnode 比较
+      else if (sameVnode(oldStartVnode, newEndVnode)) {
         // Vnode moved right
+
+        // （1）oldStartVnode 和 newEndVnode 相同，显然是 vnode 右移了。
+        // （2）若 while 循环刚开始，那移到 oldEndVnode.elm 右边就是最右边，是合理的；
+        // （3）若循环不是刚开始，因为比较过程是两头向中间，那么两头的 dom 的位置已经是
+        //     合理的了，移动到 oldEndVnode.elm 右边是正确的位置；
+        // （4）记住，oldVnode 和 vnode 是相同的才 patch，且 oldVnode 自己对应的 dom
+        //     总是已经存在的，vnode 的 dom 是不存在的，直接复用 oldVnode 对应的 dom。
         patchVnode(oldStartVnode, newEndVnode, insertedVnodeQueue);
+
+        // 因为新旧vnode 是在相同情况下才patch 并且新vnode 没有dom，所以直接复用旧vnode的elm
         api.insertBefore(
           parentElm,
           oldStartVnode.elm!,
@@ -323,7 +343,9 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
         );
         oldStartVnode = oldCh[++oldStartIdx];
         newEndVnode = newCh[--newEndIdx];
-      } else if (sameVnode(oldEndVnode, newStartVnode)) {
+      }
+      // TODO: 看到这了
+      else if (sameVnode(oldEndVnode, newStartVnode)) {
         // Vnode moved left
         patchVnode(oldEndVnode, newStartVnode, insertedVnodeQueue);
         api.insertBefore(parentElm, oldEndVnode.elm!, oldStartVnode.elm!);

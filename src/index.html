@@ -1,48 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
-</head>
-<body>
-  <div id="app">
-    <div class="container">
-      haha
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <div id="app">
+      <div class="container">haha</div>
     </div>
-  </div>
 
-  <div id="parentElement">
-    <span id="childElement">foo bar</span>
- </div>
-  <script>
-    let domstr = 'div#app .container'
-    const dom = document.querySelector(domstr)
-    const hashIdx = domstr.indexOf("#");  // 3
-      const dotIdx = domstr.indexOf(".", hashIdx); // 8
-      const hash = hashIdx > 0 ? hashIdx : domstr.length; // 3
-      const dot = dotIdx > 0 ? dotIdx : domstr.length; // 8
-      
-
-      const tag =
-        hashIdx !== -1 || dotIdx !== -1
-          ? domstr.slice(0, Math.min(hash, dot)) // 'div#app.container'.slice(0,Math.min(3,7))
-          : domstr;
-
-          console.log({hashIdx,dotIdx,tag});
-
-
-          // 创建要插入的节点
-var newNode = document.createElement("span");
-newNode.textContent = 'this is ewn span'
-
-// 获得父节点的引用
-var parentDiv = document.getElementById("childElement").parentNode;
-
-//实验一：referenceNode 存在 --> 正确返回
-var sp2 = document.getElementById("childElement");
-parentDiv.insertBefore(newNode, sp2);
-  </script>
-</body>
+    <div id="parentElement">
+      <span id="childElement"></span>
+    </div>
+    <script>
+      const c = document.getElementById("childElement");
+      c.textContent = "gaga";
+    </script>
+  </body>
 </html>
