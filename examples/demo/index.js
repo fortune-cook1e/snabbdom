@@ -16,14 +16,18 @@ function render() {
 
 const view = () =>
   h("div#container.two.classes", { style: { color: "red" } }, [
-    h("span", { style: { fontWeight: "bold" } }, "This is bold"),
+    h("span", { style: { fontWeight: "bold" }, key: "span.." }, "This is bold"),
     " and this is just normal text",
     h("a", { props: { href: "/foo" } }, "I'll take you places!"),
   ]);
 
 const view2 = () =>
   h("div#container.two.classes", { style: { color: "green" } }, [
-    h("span", { style: { fontWeight: "bold" } }, "This is bold"),
+    h(
+      "span.one.tow",
+      { style: { fontWeight: "bold" }, key: "span.." },
+      "This is bold"
+    ),
   ]);
 
 window.addEventListener("DOMContentLoaded", () => {

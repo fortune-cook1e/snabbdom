@@ -8,6 +8,16 @@
   </head>
   <body>
     <div id="app"></div>
+    <div id="container">this is container</div>
     <script type="module" src="./index.js"></script>
+    <script>
+      const container = document.getElementById("container");
+      const sib = container.nextSibling;
+
+      const ele = document.createElement("div");
+      ele.textContent = "ele";
+      const parent = container.parentNode;
+      parent.insertBefore(ele, sib);
+    </script>
   </body>
 </html>

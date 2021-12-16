@@ -38,6 +38,7 @@ type ArraysOf<T> = {
 
 type ModuleHooks = ArraysOf<Required<Module>>;
 
+// 返回一个map，key为child的key属性，值为child的索引值
 function createKeyToOldIdx(
   children: VNode[],
   beginIdx: number,
@@ -327,6 +328,7 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
       else if (sameVnode(oldStartVnode, newEndVnode)) {
         // Vnode moved right
 
+        // TIP:
         // （1）oldStartVnode 和 newEndVnode 相同，显然是 vnode 右移了。
         // （2）若 while 循环刚开始，那移到 oldEndVnode.elm 右边就是最右边，是合理的；
         // （3）若循环不是刚开始，因为比较过程是两头向中间，那么两头的 dom 的位置已经是
@@ -343,19 +345,26 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
         );
         oldStartVnode = oldCh[++oldStartIdx];
         newEndVnode = newCh[--newEndIdx];
-      }
-      // TODO: 看到这了
-      else if (sameVnode(oldEndVnode, newStartVnode)) {
+      } else if (sameVnode(oldEndVnode, newStartVnode)) {
         // Vnode moved left
+
+        // TIP: 与上面同理
         patchVnode(oldEndVnode, newStartVnode, insertedVnodeQueue);
         api.insertBefore(parentElm, oldEndVnode.elm!, oldStartVnode.elm!);
         oldEndVnode = oldCh[--oldEndIdx];
         newStartVnode = newCh[++newStartIdx];
-      } else {
+      }
+
+      // 4个vnode都不相同
+      else {
+        // TODO: 这里需要深度研究一下
+        // 创建一个旧children中存在key的map，key为key，value为旧children的索引
         if (oldKeyToIdx === undefined) {
           oldKeyToIdx = createKeyToOldIdx(oldCh, oldStartIdx, oldEndIdx);
         }
+        // 找到newStartNode的key在 旧 key,index 的索引值
         idxInOld = oldKeyToIdx[newStartVnode.key as string];
+        // 如果没有索引值，说明startVnode是全新，直接将新的vnode插入到旧startVnode前面即可
         if (isUndef(idxInOld)) {
           // New element
           api.insertBefore(
@@ -363,20 +372,27 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
             createElm(newStartVnode, insertedVnodeQueue),
             oldStartVnode.elm!
           );
-        } else {
+        }
+        // 如果索引值存在,说明新旧vnode中有相同key的vnode
+        else {
           elmToMove = oldCh[idxInOld];
+          // 如果新旧vnode的selector不一样 那么直接创建新的dom 插入到旧的startVnode前面
           if (elmToMove.sel !== newStartVnode.sel) {
             api.insertBefore(
               parentElm,
               createElm(newStartVnode, insertedVnodeQueue),
               oldStartVnode.elm!
             );
-          } else {
+          }
+          // 如果selector一样，直接移动key值相同的vnode即可(复用旧vnode)
+          else {
             patchVnode(elmToMove, newStartVnode, insertedVnodeQueue);
+            // 这里设置为undefined之后 最初的判断就会进行 oldStartIdx++操作，不断右移判断
             oldCh[idxInOld] = undefined as any;
             api.insertBefore(parentElm, elmToMove.elm!, oldStartVnode.elm!);
           }
         }
+        // 重新赋值新的startVnode
         newStartVnode = newCh[++newStartIdx];
       }
     }
