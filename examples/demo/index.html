@@ -7,10 +7,11 @@
     <title>Document</title>
   </head>
   <body>
-    <div id="app"></div>
+    <div id="app">this is app block</div>
     <div id="container">this is container</div>
+    <button id="btn">click me to render virtual dom</button>
     <script type="module" src="./index.js"></script>
-    <script>
+    <!-- <script>
       const container = document.getElementById("container");
       const sib = container.nextSibling;
 
@@ -18,6 +19,6 @@
       ele.textContent = "ele";
       const parent = container.parentNode;
       parent.insertBefore(ele, sib);
-    </script>
+    </script> -->
   </body>
 </html>

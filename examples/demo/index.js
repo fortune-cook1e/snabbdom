@@ -15,25 +15,28 @@ function render() {
 }
 
 const view = () =>
-  h("div#container.two.classes", { style: { color: "red" } }, [
-    h("span", { style: { fontWeight: "bold" }, key: "span.." }, "This is bold"),
-    " and this is just normal text",
-    h("a", { props: { href: "/foo" } }, "I'll take you places!"),
+  h("div#container.two.classes", [
+    h("span", { key: "span1" }, "This is span1"),
+    h("span", { key: "span2" }, "This is span2"),
   ]);
 
 const view2 = () =>
-  h("div#container.two.classes", { style: { color: "green" } }, [
-    h(
-      "span.one.tow",
-      { style: { fontWeight: "bold" }, key: "span.." },
-      "This is bold"
-    ),
+  h("div#container.two.classes", [
+    h("span", { key: "span3" }, "This is span3"),
+    h("span", { key: "span4" }, "This is span4"),
+    h("span", { key: "span2" }, "This is span2"),
+    h("span", { key: "span1" }, "This is span1"),
   ]);
 
-window.addEventListener("DOMContentLoaded", () => {
-  const container = document.getElementById("app");
+const btn = document.getElementById("btn");
+
+window.onload = function () {
+  const container = document.getElementById("container");
+  console.log("初次render开始");
   vnode = patch(container, view());
-  console.log(vnode);
+  console.log("初次render完成");
+};
+
+btn.onclick = function () {
   render();
-  console.log(vnode);
-});
+};

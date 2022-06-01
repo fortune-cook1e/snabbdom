@@ -20,7 +20,7 @@ const emptyNode = vnode("", {}, [], undefined, undefined);
 function sameVnode(vnode1: VNode, vnode2: VNode): boolean {
   const isSameKey = vnode1.key === vnode2.key;
   const isSameIs = vnode1.data?.is === vnode2.data?.is;
-  const isSameSel = vnode1.sel === vnode2.sel;
+  const isSameSel = vnode1.sel === vnode2.sel; // selector: #app #root 这种
 
   return isSameSel && isSameKey && isSameIs;
 }
@@ -63,10 +63,13 @@ const hooks: Array<keyof Module> = [
   "post", // the patch process is done
 ];
 
+/**
+ * @description 初始化函数
+ * @param {Array} modules 如果传递 styleModule 那么就会处理 vnode 的style属性；不传则不处理
+ * @param {DOMAPI} domApi 个人觉得这个地方是用来做跨平台处理
+ * @date 2022-05-05 12:11:02
+ */
 export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
-  // modules的作用：
-  // 如果传递styleModule 那么就会处理vnode 的style属性；不传则不处理
-
   const cbs: ModuleHooks = {
     create: [],
     update: [],
@@ -483,6 +486,8 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
   }
 
   return function patch(oldVnode: VNode | Element, vnode: VNode): VNode {
+    console.log("patch 开始执行...");
+
     let i: number, elm: Node, parent: Node;
     // TODO: 不太懂这个需要插入的vnode 队列的意义在哪
     const insertedVnodeQueue: VNodeQueue = [];
@@ -492,12 +497,17 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
 
     // 如果旧节点不是虚拟vnode(真实的Dom节点)
     // 那么根据真实DOM创建一个空data的vnode
+    // TIP: 该情况只出现在初次渲染时
     if (!isVnode(oldVnode)) {
       oldVnode = emptyNodeAt(oldVnode);
     }
 
+    console.log("patch vnode", { oldVnode, vnode });
+
     // 是否为一个vnode节点
     // 判断是否相同的指标 key/selector/is 相同
+    const result = sameVnode(oldVnode, vnode);
+    console.log("sameVnode", result);
     if (sameVnode(oldVnode, vnode)) {
       patchVnode(oldVnode, vnode, insertedVnodeQueue);
     } else {
@@ -521,6 +531,8 @@ export function init(modules: Array<Partial<Module>>, domApi?: DOMAPI) {
 
     // 执行patch完后的hook函数
     for (i = 0; i < cbs.post.length; ++i) cbs.post[i]();
+
+    console.log("patch 结束执行...");
     return vnode;
   };
 }

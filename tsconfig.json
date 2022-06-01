@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "removeComments": false,
-    "sourceMap": true,
-    "declaration": true,
+    "sourceMap": false,
+    "declaration": false,
     "strict": true,
     "strictFunctionTypes": false,
     "moduleResolution": "node",
